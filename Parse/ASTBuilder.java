@@ -232,5 +232,47 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
               new EmptyStmt(0)
       );
    }
+   
+   //visitInitialization
+   @Override
+   public Absyn visitInitialization(gParser.InitializationContext ctx)
+   {
+        if (ctx.initializer() != null) {return visit(ctx.initializer());}
+        else {return new EmptyExp(0); }
+   }
+   
+   //visitAssignExp
+   @Override
+   public Absyn visitAssignExp(gParser.AssignExpContext ctx)
+   { 
+        Exp left = (Exp) visit(ctx.getChild(0));
+        Exp right = (Exp) visit(ctx.getChild(2));
+        return new BinOp(0, left, "=", right);
+   }
+   
+   //visitExprArrayBracket
+   @Override
+   public Absyn visitExprArrayBrackets(gParser.ExprArrayBracketsContext ctx)
+   {
+       Exp index = (Exp) visit(ctx.expr(0));
+       return index;
+   }
+   //visitEmptyArrayBrackets
+   @Override
+   public Absyn visitEmptyArrayBrackets(gParser.EmptyArrayBracketsContext ctx) 
+   {return new EmptyExp(0);}
+   
+   //visitType_name
+   @Override
+   public Absyn visitType_name(gParser.Type_nameContext ctx) 
+   {return new Type(0, false, ctx.getText(), 0, new DeclList(0));}
+   
 }
+
+
+
+
+
+
+
 
