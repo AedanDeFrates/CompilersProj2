@@ -46,15 +46,70 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
    public Absyn visitVarDecl(gParser.VarDeclContext ctx) {
       gParser.InitializationContext initalization = ctx.initialization();
       gParser.InitializerContext initializer = initalization.initializer();
+      Exp init = (initializer != null) ? (Exp)visit(initializer) : new EmptyExp(0);
 
       return new VarDecl(
               0,
               (Type)visit(ctx.type()),
               ctx.ID().getText(),
-              (Exp)visit(initializer.expr())
+              init
      );
    }
 
+   @Override   //Initializer (expr or LCURLY initializer (COMMA initializer)* RCURLY)
+   public Absyn visitInitializer(gParser.InitializerContext ctx) {
+      if (ctx.LCURLY() != null) {
+         ExpList list = new ExpList(0);
+         for (int i = 0; i < ctx.initializer().size(); i++) {
+            list.list.add((Exp)visit(ctx.initializer(i)));
+         }
+         return list;
+      } else {
+         return visit(ctx.expr());
+      }
+   }
+
+   @Override   //Struct or Union Declaration
+   public Absyn visitStructOrUnionDecl(gParser.StructOrUnionDeclContext ctx) {
+      String name = ctx.ID(0).getText();
+      DeclList body = new DeclList(0);
+      for (int i = 0; i < ctx.type().size(); i++) {
+         body.list.add(new StructMember(0, (Type)visit(ctx.type(i)), ctx.ID(i + 1).getText()));
+      }
+      if (ctx.STRUCT() != null) {
+         return new StructDecl(0, name, body);
+      } else {
+         return new UnionDecl(0, name, body);
+      }
+   }
+
+   @Override   //Function Declaration
+   public Absyn visitFunDecl(gParser.FunDeclContext ctx) {
+      DeclList params = (ctx.parameters() != null) ? (DeclList)visit(ctx.parameters()) : new DeclList(0);
+      Stmt body = (Stmt)visit(ctx.statement());
+      if (body == null) body = new EmptyStmt(0);
+      return new FunDecl(
+         0,
+         (Type)visit(ctx.type()),
+         ctx.ID().getText(),
+         params,
+         body
+      );
+   }
+
+   @Override   //Typedef Declaration
+   public Absyn visitTypedefDecl(gParser.TypedefDeclContext ctx) {
+      return new Typedef(0, (Type)visit(ctx.type()), ctx.ID().getText());
+   }
+
+   @Override   //Parameters (type ID (COMMA type ID)*)
+   public Absyn visitParameters(gParser.ParametersContext ctx) {
+      DeclList params = new DeclList(0);
+      for (int i = 0; i < ctx.type().size(); i++) {
+         params.list.add(new Parameter(0, (Type)visit(ctx.type(i)), ctx.ID(i).getText()));
+      }
+      return params;
+   }
 
    //===================
    //       TYPE
