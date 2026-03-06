@@ -53,20 +53,6 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
       );
    }
 
-   @Override   //Initializer (expr or LCURLY initializer (COMMA initializer)* RCURLY)
-   public Absyn visitInitializer(gParser.InitializerContext ctx) {
-
-      if (ctx.LCURLY() != null) {
-         ExpList list = new ExpList(0);
-         for (int i = 0; i < ctx.initializer().size(); i++) {
-            list.list.add((Exp) visit(ctx.initializer(i)));
-         }
-         return list;
-      } else {
-         return visit(ctx.expr());
-      }
-   }
-
    @Override   //Struct or Union Declaration
    public Absyn visitStructOrUnionDecl(gParser.StructOrUnionDeclContext ctx) {
       String name = ctx.ID(0).getText();
@@ -106,6 +92,10 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
       return new Typedef(0, (Type) visit(ctx.type()), ctx.ID().getText());
    }
 
+   //====================
+   //    PARAMETERS
+   //====================
+
    @Override   //Parameters (type ID (COMMA type ID)*)
    public Absyn visitParameters(gParser.ParametersContext ctx) {
       DeclList params = new DeclList(0);
@@ -136,6 +126,12 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
               numPointers,
               new DeclList(0) //this still needs to be implemented using bracketlist
       );
+   }
+
+   //visitType_name
+   @Override
+   public Absyn visitType_name(gParser.Type_nameContext ctx) {
+      return new Type(0, false, ctx.getText(), 0, new DeclList(0));
    }
 
 
@@ -224,6 +220,14 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
       );
    }
 
+   //visitAssignExp
+   @Override
+   public Absyn visitAssignExp(gParser.AssignExpContext ctx) {
+      Exp left = (Exp) visit(ctx.getChild(0));
+      Exp right = (Exp) visit(ctx.getChild(2));
+      return new BinOp(0, left, "=", right);
+   }
+
 
    //===================
    //    STATEMENTS
@@ -273,7 +277,7 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
       );
    }
 
-   @Override //Exp
+   @Override //Exp Stmt
    public Absyn visitExprStmt(gParser.ExprStmtContext ctx) {
       return new ExprStmt(
               0, (Exp) visit(ctx.expr())
@@ -293,7 +297,9 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
       return new BreakStmt(0);
    }
 
-
+   //====================
+   //  INITIALIZATION
+   //====================
    //visitInitialization
    @Override
    public Absyn visitInitialization(gParser.InitializationContext ctx) {
@@ -306,14 +312,26 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
       }
    }
 
-   //visitAssignExp
-   @Override
-   public Absyn visitAssignExp(gParser.AssignExpContext ctx) {
-      Exp left = (Exp) visit(ctx.getChild(0));
-      Exp right = (Exp) visit(ctx.getChild(2));
-      return new BinOp(0, left, "=", right);
+   //====================
+   //   INITIALIZER
+   //====================
+   @Override   //Initializer (expr or LCURLY initializer (COMMA initializer)* RCURLY)
+   public Absyn visitInitializer(gParser.InitializerContext ctx) {
+
+      if (ctx.LCURLY() != null) {
+         ExpList list = new ExpList(0);
+         for (int i = 0; i < ctx.initializer().size(); i++) {
+            list.list.add((Exp) visit(ctx.initializer(i)));
+         }
+         return list;
+      } else {
+         return visit(ctx.expr());
+      }
    }
 
+   //====================
+   //     BRACKETS
+   //====================
    //visitExprArrayBracket
    @Override
    public Absyn visitExprArrayBrackets(gParser.ExprArrayBracketsContext ctx)
@@ -321,17 +339,11 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
       Exp index = (Exp) visit(ctx.expr(0));
       return index;
    }
-   
+
    //visitEmptyArrayBrackets
    @Override
    public Absyn visitEmptyArrayBrackets(gParser.EmptyArrayBracketsContext ctx)
    {return new EmptyExp(0);}
-
-   //visitType_name
-   @Override
-   public Absyn visitType_name(gParser.Type_nameContext ctx) {
-      return new Type(0, false, ctx.getText(), 0, new DeclList(0));
-   }
 
 
 }
