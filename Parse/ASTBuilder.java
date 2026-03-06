@@ -110,7 +110,7 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
    //       TYPE
    //===================
 
-   Override   //Type
+   @Override   //Type
 
    public Absyn visitType(gParser.TypeContext ctx) {
       boolean constant = false;
@@ -119,12 +119,20 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
       }
       int numPointers = ctx.STAR().size();
 
+      DeclList brackets;
+      if (ctx.brackets_list() == null){
+         brackets = new DeclList(0);
+      }
+      else {
+         brackets = (DeclList) visit(ctx.brackets_list());
+      }
+
       return new Type(
               0,
               constant,
               ctx.type_name().getText(),
               numPointers,
-              new DeclList(0) //this still needs to be implemented using bracketlist
+              brackets
       );
    }
 
@@ -336,16 +344,24 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
    @Override
    public Absyn visitExprArrayBrackets(gParser.ExprArrayBracketsContext ctx)
    {
-      Exp index = (Exp) visit(ctx.expr(0));
+      DeclList index =  new DeclList(0);
+      for(int i=0; i < ctx.expr().size(); i++){
+         gParser.ExprContext temp = ctx.expr(i);
+         index.list.add(new ArrayType(0, (Exp) visit(temp)));
+      }
       return index;
    }
 
    //visitEmptyArrayBrackets
    @Override
    public Absyn visitEmptyArrayBrackets(gParser.EmptyArrayBracketsContext ctx)
-   {return new EmptyExp(0);}
-
-
+   {
+      DeclList index = new DeclList(0);
+      for(int i=0; i < ctx.LSQUARE().size(); i++){
+         index.list.add(new ArrayType(0, new EmptyExp(0)));
+      }
+      return index;
+   }
 }
 
 
