@@ -2,7 +2,7 @@ package Parse;
 
 import Absyn.*;
 import Parse.antlr_build.Parse.*;
-
+import org.antlr.v4.runtime.ParserRuleContext;
 import java.util.List;
 
 
@@ -39,18 +39,31 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
    //    DECLARATIONS
    //====================
 
-   @Override   //Variable Declaration
+   @Override   //Variable Decleration
    public Absyn visitVarDecl(gParser.VarDeclContext ctx) {
-      gParser.InitializationContext initialization = ctx.initialization();
-      gParser.InitializerContext initializer = initialization.initializer();
-      Exp init = (initializer != null) ? (Exp) visit(initializer) : new EmptyExp(0);
+      gParser.InitializationContext initalization = ctx.initialization();
+      gParser.InitializerContext initializer = initalization.initializer();
+      Exp init = (initializer != null) ? (Exp)visit(initializer) : new EmptyExp(0);
 
       return new VarDecl(
               0,
-              (Type) visit(ctx.type()),
+              (Type)visit(ctx.type()),
               ctx.ID().getText(),
               init
-      );
+     );
+   }
+
+   @Override   //Initializer (expr or LCURLY initializer (COMMA initializer)* RCURLY)
+   public Absyn visitInitializer(gParser.InitializerContext ctx) {
+      if (ctx.LCURLY() != null) {
+         ExpList list = new ExpList(0);
+         for (int i = 0; i < ctx.initializer().size(); i++) {
+            list.list.add((Exp)visit(ctx.initializer(i)));
+         }
+         return list;
+      } else {
+         return visit(ctx.expr());
+      }
    }
 
    @Override   //Struct or Union Declaration
@@ -75,15 +88,15 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
 
    @Override   //Function Declaration
    public Absyn visitFunDecl(gParser.FunDeclContext ctx) {
-      DeclList params = (ctx.parameters() != null) ? (DeclList) visit(ctx.parameters()) : new DeclList(0);
-      Stmt body = (Stmt) visit(ctx.statement());
+      DeclList params = (ctx.parameters() != null) ? (DeclList)visit(ctx.parameters()) : new DeclList(0);
+      Stmt body = (Stmt)visit(ctx.statement());
       if (body == null) body = new EmptyStmt(0);
       return new FunDecl(
-              0,
-              (Type) visit(ctx.type()),
-              ctx.ID().getText(),
-              params,
-              body
+         0,
+         (Type)visit(ctx.type()),
+         ctx.ID().getText(),
+         params,
+         body
       );
    }
 
