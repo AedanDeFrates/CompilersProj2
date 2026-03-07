@@ -43,7 +43,7 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
    public Absyn visitVarDecl(gParser.VarDeclContext ctx) {
       gParser.InitializationContext initalization = ctx.initialization();
       gParser.InitializerContext initializer = initalization.initializer();
-      Exp init = (initializer != null) ? (Exp)visit(initializer) : new EmptyExp(0);
+      Exp init = (initializer != null) ? (Exp)visit(initializer) : new ExpList(0);
 
       return new VarDecl(
               0,
@@ -53,18 +53,7 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
      );
    }
 
-   @Override   //Initializer (expr or LCURLY initializer (COMMA initializer)* RCURLY)
-   public Absyn visitInitializer(gParser.InitializerContext ctx) {
-      if (ctx.LCURLY() != null) {
-         ExpList list = new ExpList(0);
-         for (int i = 0; i < ctx.initializer().size(); i++) {
-            list.list.add((Exp)visit(ctx.initializer(i)));
-         }
-         return list;
-      } else {
-         return visit(ctx.expr());
-      }
-   }
+
 
    @Override   //Struct or Union Declaration
    public Absyn visitStructOrUnionDecl(gParser.StructOrUnionDeclContext ctx) {
