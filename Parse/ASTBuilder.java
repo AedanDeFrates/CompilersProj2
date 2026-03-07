@@ -151,7 +151,8 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
 
    @Override   //Decimal Literal
    public Absyn visitDecLit(gParser.DecLitContext ctx) {
-      int value = Integer.parseInt(ctx.DECIMAL_LITERAL().getText());
+
+      int value = Integer.decode(ctx.DECIMAL_LITERAL().getText());
       return new DecLit(0, value);
    }
 
@@ -235,7 +236,7 @@ public class ASTBuilder extends gParserBaseVisitor<Absyn> {
    public Absyn visitAssignExp(gParser.AssignExpContext ctx) {
       Exp left = (Exp) visit(ctx.getChild(0));
       Exp right = (Exp) visit(ctx.getChild(2));
-      return new BinOp(0, left, "=", right);
+      return new AssignExp(0, left, right);
    }
 
 
